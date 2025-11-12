@@ -15,19 +15,20 @@
     "build": "tsdown"
   },
   "devDependencies": {
-    "tsdown": "catalog:",
-    "@vznx-challenge/config": "workspace:*"
+    "@vznx-challenge/config": "workspace:*",
+    "tsdown": "catalog:"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@trpc/server": "catalog:",
     "@trpc/client": "catalog:",
-    "next": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
+    "@trpc/server": "catalog:",
     "@vznx-challenge/auth": "workspace:*",
-    "@vznx-challenge/db": "workspace:*"
+    "@vznx-challenge/db": "workspace:*",
+    "dotenv": "catalog:",
+    "drizzle-orm": "^0.44.7",
+    "next": "catalog:",
+    "zod": "catalog:"
   }
 }
