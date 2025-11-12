@@ -8,7 +8,7 @@ export const projectStatuses = [
   "on-hold",
 ] as const;
 
-// Zod schema for creating a new project
+// Zod schema for creating a new project (client input - userId added server-side)
 export const createProjectSchema = z.object({
   name: z
     .string()
@@ -16,7 +16,6 @@ export const createProjectSchema = z.object({
     .max(255, "Project name must be less than 255 characters"),
   description: z.string().optional(),
   status: z.enum(projectStatuses).default("planning"),
-  userId: z.string(),
 });
 
 // Zod schema for updating a project
