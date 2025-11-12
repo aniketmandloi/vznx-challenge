@@ -1,0 +1,33 @@
+{
+  "name": "@vznx-challenge/api",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "@vznx-challenge/config": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@trpc/server": "catalog:",
+    "@trpc/client": "catalog:",
+    "next": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:",
+    "@vznx-challenge/auth": "workspace:*",
+    "@vznx-challenge/db": "workspace:*"
+  }
+}
