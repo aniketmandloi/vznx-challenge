@@ -17,7 +17,7 @@ interface TaskItemProps {
     name: string;
     email: string;
   };
-  onToggleStatus?: (id: number, newStatus: TaskStatus) => void;
+  onToggleStatus?: (id: number) => void;
   onDelete?: (id: number) => void;
   className?: string;
 }
@@ -34,9 +34,8 @@ export function TaskItem({
   const [isChecked, setIsChecked] = useState(status === "complete");
 
   const handleToggle = () => {
-    const newStatus: TaskStatus = isChecked ? "incomplete" : "complete";
     setIsChecked(!isChecked);
-    onToggleStatus?.(id, newStatus);
+    onToggleStatus?.(id);
   };
 
   return (
