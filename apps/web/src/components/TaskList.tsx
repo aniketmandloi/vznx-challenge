@@ -52,6 +52,12 @@ type Task = {
   order: number;
   createdAt: Date | string;
   updatedAt: Date | string;
+  assignedTo?: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+  };
 };
 
 interface TaskListProps {
@@ -61,6 +67,7 @@ interface TaskListProps {
     id: string;
     name: string;
     email: string;
+    image: string | null;
   }>;
 }
 
@@ -355,6 +362,7 @@ export function TaskList({
                   id={task.id}
                   name={task.name}
                   status={task.status}
+                  assignedTo={task.assignedTo}
                   onToggleStatus={handleToggleStatus}
                   onDelete={() => confirmDelete(task.id)}
                   isDragEnabled={true}

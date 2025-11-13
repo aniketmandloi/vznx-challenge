@@ -3,6 +3,7 @@ import { eq, and, sql } from "drizzle-orm";
 import {
   project,
   task,
+  user,
   createProjectSchema,
   updateProjectSchema,
   deleteProjectSchema,
@@ -63,12 +64,29 @@ export const projectsRouter = router({
         });
       }
 
-      // Get all tasks for this project
-      const tasks = await ctx.db
-        .select()
+      // Get all tasks for this project with assignedTo user data
+      const tasksData = await ctx.db
+        .select({
+          task: task,
+          assignedTo: user,
+        })
         .from(task)
+        .leftJoin(user, eq(task.assignedToId, user.id))
         .where(eq(task.projectId, input.id))
         .orderBy(task.order, task.createdAt);
+
+      // Transform the data to include assignedTo as a nested object
+      const tasks = tasksData.map((row) => ({
+        ...row.task,
+        assignedTo: row.assignedTo
+          ? {
+              id: row.assignedTo.id,
+              name: row.assignedTo.name,
+              email: row.assignedTo.email,
+              image: row.assignedTo.image,
+            }
+          : undefined,
+      }));
 
       return {
         ...projectData,

@@ -46,6 +46,11 @@ export function ProjectDetailContent({ projectId }: ProjectDetailContentProps) {
     error,
   } = useQuery(trpc.projects.getById.queryOptions({ id: projectId }));
 
+  // Fetch team members for task assignment
+  const { data: teamMembers = [] } = useQuery(
+    trpc.team.getMembers.queryOptions()
+  );
+
   // Mutations
   const updateProject = useMutation({
     ...trpc.projects.update.mutationOptions(),
@@ -246,7 +251,16 @@ export function ProjectDetailContent({ projectId }: ProjectDetailContentProps) {
       <Separator />
 
       {/* Tasks Section */}
-      <TaskList projectId={projectId} tasks={projectData.tasks} />
+      <TaskList
+        projectId={projectId}
+        tasks={projectData.tasks}
+        availableUsers={teamMembers.map((member) => ({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+          image: member.image,
+        }))}
+      />
 
       {/* Edit Project Dialog */}
       <ProjectForm

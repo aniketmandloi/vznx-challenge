@@ -17,7 +17,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, User, GripVertical, Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Trash2, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -31,6 +32,7 @@ interface TaskItemProps {
     id: string;
     name: string;
     email: string;
+    image?: string | null;
   };
   onToggleStatus?: (id: number) => void;
   onDelete?: (id: number) => void;
@@ -182,9 +184,22 @@ export function TaskItem({
           {name}
         </p>
         {assignedTo && (
-          <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-            <User className="h-3 w-3" />
-            <span className="truncate">
+          <div className="flex items-center gap-2 mt-1.5">
+            <Avatar className="h-5 w-5">
+              <AvatarImage
+                src={assignedTo.image || undefined}
+                alt={assignedTo.name}
+              />
+              <AvatarFallback className="text-[9px] bg-muted">
+                {assignedTo.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-muted-foreground truncate">
               {assignedTo.name || assignedTo.email}
             </span>
           </div>
