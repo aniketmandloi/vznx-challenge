@@ -90,6 +90,80 @@ body {
   --transition-slow: 350ms;
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+
+  /* Claude-inspired gradients */
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.65 0.2 270) 0%,
+    oklch(0.55 0.25 290) 100%
+  );
+  --gradient-accent: linear-gradient(
+    135deg,
+    oklch(0.7 0.2 260) 0%,
+    oklch(0.65 0.22 240) 100%
+  );
+  --gradient-mesh-1: radial-gradient(
+    at 40% 20%,
+    oklch(0.75 0.15 270 / 0.3) 0%,
+    transparent 50%
+  );
+  --gradient-mesh-2: radial-gradient(
+    at 80% 0%,
+    oklch(0.7 0.18 240 / 0.25) 0%,
+    transparent 50%
+  );
+  --gradient-mesh-3: radial-gradient(
+    at 0% 50%,
+    oklch(0.72 0.16 290 / 0.2) 0%,
+    transparent 50%
+  );
+  --gradient-card: linear-gradient(145deg, oklch(1 0 0 / 0.05), transparent);
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.1),
+    transparent
+  );
+  --gradient-text: linear-gradient(
+    135deg,
+    oklch(0.6 0.22 260),
+    oklch(0.55 0.25 280)
+  );
+
+  /* Shadow elevation system */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow-base: 0 1px 3px 0 oklch(0 0 0 / 0.1),
+    0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1),
+    0 2px 4px -2px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1),
+    0 4px 6px -4px oklch(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.1),
+    0 8px 10px -6px oklch(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.25);
+  --shadow-colored: 0 8px 16px -4px oklch(0.6 0.22 255 / 0.2);
+  --shadow-glow: 0 0 20px 0 oklch(0.6 0.22 255 / 0.3);
+
+  /* Typography refinements */
+  --font-display: var(--font-sans);
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.05em;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+  --line-height-loose: 2;
+
+  /* Spacing scale (generous, Claude-inspired) */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
 }
 
 .dark {
@@ -151,6 +225,59 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: var(--color-blue-500);
+
+  /* Dark mode gradients (darker, more subtle) */
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.35 0.15 270) 0%,
+    oklch(0.25 0.18 290) 100%
+  );
+  --gradient-accent: linear-gradient(
+    135deg,
+    oklch(0.4 0.15 260) 0%,
+    oklch(0.35 0.17 240) 100%
+  );
+  --gradient-mesh-1: radial-gradient(
+    at 40% 20%,
+    oklch(0.4 0.12 270 / 0.2) 0%,
+    transparent 50%
+  );
+  --gradient-mesh-2: radial-gradient(
+    at 80% 0%,
+    oklch(0.35 0.14 240 / 0.15) 0%,
+    transparent 50%
+  );
+  --gradient-mesh-3: radial-gradient(
+    at 0% 50%,
+    oklch(0.38 0.13 290 / 0.15) 0%,
+    transparent 50%
+  );
+  --gradient-card: linear-gradient(145deg, oklch(1 0 0 / 0.03), transparent);
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.05),
+    transparent
+  );
+  --gradient-text: linear-gradient(
+    135deg,
+    oklch(0.7 0.18 260),
+    oklch(0.65 0.2 280)
+  );
+
+  /* Dark mode shadows (lighter, more subtle) */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.2);
+  --shadow-base: 0 1px 3px 0 oklch(0 0 0 / 0.3),
+    0 1px 2px -1px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.3),
+    0 2px 4px -2px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.4),
+    0 4px 6px -4px oklch(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.4),
+    0 8px 10px -6px oklch(0 0 0 / 0.4);
+  --shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.5);
+  --shadow-colored: 0 8px 16px -4px oklch(0.65 0.2 255 / 0.3);
+  --shadow-glow: 0 0 20px 0 oklch(0.65 0.2 255 / 0.4);
 }
 
 @theme inline {
@@ -305,5 +432,113 @@ body {
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--color-primary / 0.7);
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 0 10px var(--color-primary / 0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes backdrop-blur-in {
+  from {
+    backdrop-filter: blur(0px);
+    opacity: 0;
+  }
+  to {
+    backdrop-filter: blur(12px);
+    opacity: 1;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }

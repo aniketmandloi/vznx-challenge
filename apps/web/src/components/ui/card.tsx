@@ -1,16 +1,52 @@
 import * as React from "react";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { cardVariants, fadeIn, transitions } from "@/lib/animations";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+interface CardProps
+  extends Omit<
+    React.ComponentProps<"div">,
+    "onDrag" | "onDragEnd" | "onDragStart"
+  > {
+  animated?: boolean;
+  hoverEffect?: boolean;
+}
+
+function Card({
+  className,
+  animated = true,
+  hoverEffect = true,
+  ...props
+}: CardProps) {
+  if (!animated) {
+    return (
+      <div
+        data-slot="card"
+        className={cn(
+          "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm transition-all duration-200 motion-reduce:transition-none",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+
   return (
-    <div
+    <motion.div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm transition-all duration-200 motion-reduce:transition-none",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 transition-all duration-200 motion-reduce:transition-none",
         className
       )}
-      {...props}
+      variants={hoverEffect ? cardVariants : fadeIn}
+      initial="initial"
+      whileHover={hoverEffect ? "hover" : undefined}
+      transition={transitions.base}
+      style={{
+        boxShadow: "var(--shadow-base)",
+      }}
+      {...(props as any)}
     />
   );
 }
