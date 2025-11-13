@@ -1,3 +1,14 @@
+/**
+ * TaskList Component
+ *
+ * Displays and manages tasks for a project:
+ * - Drag-and-drop reordering using @dnd-kit
+ * - Create new tasks with optional user assignment
+ * - Toggle task status (incomplete/complete) with optimistic updates
+ * - Delete tasks with confirmation dialog
+ * - Auto-updates project progress when tasks change
+ * - Responsive grid layout with empty state
+ */
 "use client";
 
 import { useState } from "react";
@@ -16,6 +27,21 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, ListTodo, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 type Task = {
   id: number;
@@ -47,6 +73,18 @@ export function TaskList({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
   const queryClient = useQueryClient();
+
+  // Setup sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before dragging starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Mutations with optimistic updates
   const createTask = useMutation({
@@ -183,6 +221,46 @@ export function TaskList({
     },
   });
 
+  const reorderTasks = useMutation({
+    ...trpc.tasks.reorder.mutationOptions(),
+    onMutate: async (variables) => {
+      const queryKey = trpc.projects.getById.queryOptions({
+        id: projectId,
+      }).queryKey;
+      await queryClient.cancelQueries({ queryKey });
+
+      // Optimistically update task order
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        const reorderedTasks = old.tasks.map((task: Task) => {
+          const newOrder = variables.taskIds.indexOf(task.id);
+          return newOrder !== -1 ? { ...task, order: newOrder } : task;
+        });
+        // Sort by new order
+        reorderedTasks.sort((a: Task, b: Task) => a.order - b.order);
+        return {
+          ...old,
+          tasks: reorderedTasks,
+        };
+      });
+
+      return undefined;
+    },
+    onError: () => {
+      const queryKey = trpc.projects.getById.queryOptions({
+        id: projectId,
+      }).queryKey;
+      queryClient.invalidateQueries({ queryKey });
+      toast.error("Failed to reorder tasks");
+    },
+    onSettled: () => {
+      const queryKey = trpc.projects.getById.queryOptions({
+        id: projectId,
+      }).queryKey;
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
   const handleCreateTask = async (data: {
     name: string;
     assignedToId: string | null;
@@ -211,6 +289,32 @@ export function TaskList({
     setDeleteDialogOpen(true);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = tasks.findIndex((task) => task.id === active.id);
+      const newIndex = tasks.findIndex((task) => task.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Create new array with updated order
+        const reorderedTasks = arrayMove(tasks, oldIndex, newIndex);
+
+        // Extract task IDs in new order
+        const taskIds = reorderedTasks.map((task) => task.id);
+
+        // Call the reorder mutation
+        reorderTasks.mutate({
+          projectId,
+          taskIds,
+        });
+      }
+    }
+  };
+
+  // Get task IDs for SortableContext
+  const taskIds = tasks.map((task) => task.id);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -235,18 +339,30 @@ export function TaskList({
           }}
         />
       ) : (
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              name={task.name}
-              status={task.status}
-              onToggleStatus={handleToggleStatus}
-              onDelete={() => confirmDelete(task.id)}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={taskIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {tasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  name={task.name}
+                  status={task.status}
+                  onToggleStatus={handleToggleStatus}
+                  onDelete={() => confirmDelete(task.id)}
+                  isDragEnabled={true}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Add Task Dialog */}

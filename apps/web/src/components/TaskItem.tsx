@@ -1,10 +1,25 @@
+/**
+ * TaskItem Component
+ *
+ * Individual task card with:
+ * - Drag handle for reordering (appears on hover)
+ * - Checkbox to toggle completion status
+ * - Strike-through text when completed
+ * - Celebration animation (sparkles + scale) on completion
+ * - Optional assigned user display
+ * - Delete button (appears on hover)
+ * - Smooth animations and transitions
+ */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, User } from "lucide-react";
+import { Trash2, User, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export type TaskStatus = "incomplete" | "complete";
 
@@ -20,6 +35,7 @@ interface TaskItemProps {
   onToggleStatus?: (id: number) => void;
   onDelete?: (id: number) => void;
   className?: string;
+  isDragEnabled?: boolean;
 }
 
 export function TaskItem({
@@ -30,23 +46,126 @@ export function TaskItem({
   onToggleStatus,
   onDelete,
   className,
+  isDragEnabled = true,
 }: TaskItemProps) {
   const [isChecked, setIsChecked] = useState(status === "complete");
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: id,
+    disabled: !isDragEnabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  // Trigger celebration when task is completed
+  useEffect(() => {
+    if (isChecked && status === "incomplete") {
+      setShowCelebration(true);
+      const timer = setTimeout(() => setShowCelebration(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isChecked, status]);
 
   const handleToggle = () => {
-    setIsChecked(!isChecked);
+    const newChecked = !isChecked;
+    setIsChecked(newChecked);
+
+    // Show celebration only when completing a task (not uncompleting)
+    if (newChecked) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 1000);
+    }
+
     onToggleStatus?.(id);
   };
 
   return (
-    <div
+    <motion.div
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border p-3 transition-all",
+        "group flex items-center gap-3 rounded-lg border p-3 transition-all relative overflow-hidden",
         "hover:shadow-md hover:border-primary/50",
         isChecked && "bg-muted/50",
+        isDragging && "opacity-50 shadow-lg z-50",
         className
       )}
+      animate={
+        showCelebration
+          ? {
+              scale: [1, 1.02, 1],
+              borderColor: [
+                "hsl(var(--border))",
+                "hsl(var(--primary))",
+                "hsl(var(--border))",
+              ],
+            }
+          : {}
+      }
+      transition={{ duration: 0.3 }}
     >
+      {/* Celebration Effect */}
+      <AnimatePresence>
+        {showCelebration && (
+          <>
+            {/* Sparkle particles */}
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute"
+                initial={{
+                  x: "50%",
+                  y: "50%",
+                  scale: 0,
+                  opacity: 1,
+                }}
+                animate={{
+                  x: `${50 + Math.cos((i * Math.PI) / 3) * 100}%`,
+                  y: `${50 + Math.sin((i * Math.PI) / 3) * 100}%`,
+                  scale: [0, 1, 0],
+                  opacity: [1, 1, 0],
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <Sparkles className="h-3 w-3 text-primary" />
+              </motion.div>
+            ))}
+            {/* Success ring */}
+            <motion.div
+              className="absolute inset-0 rounded-lg border-2 border-primary pointer-events-none"
+              initial={{ scale: 1, opacity: 0.8 }}
+              animate={{ scale: 1.1, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Drag Handle */}
+      {isDragEnabled && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="shrink-0 cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
+      )}
+
       <Checkbox
         checked={isChecked}
         onCheckedChange={handleToggle}
@@ -83,6 +202,6 @@ export function TaskItem({
           <span className="sr-only">Delete task</span>
         </Button>
       )}
-    </div>
+    </motion.div>
   );
 }
