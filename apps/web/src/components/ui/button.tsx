@@ -88,6 +88,21 @@ function Button({
 
   // If not animated, return regular button
   if (!animated) {
+    // When using asChild, pass children directly without modifications
+    if (asChild) {
+      return (
+        <Comp
+          data-slot="button"
+          className={cn(buttonVariants({ variant, size, className }))}
+          disabled={disabled || loading}
+          onClick={handleClick}
+          {...props}
+        >
+          {children}
+        </Comp>
+      );
+    }
+
     return (
       <Comp
         data-slot="button"
@@ -104,6 +119,26 @@ function Button({
 
   // Animated button with Framer Motion
   const MotionComp = asChild ? motion(SlotPrimitive.Slot) : motion.button;
+
+  // When using asChild with animation, pass children directly
+  if (asChild) {
+    return (
+      <MotionComp
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={disabled || loading}
+        onClick={handleClick}
+        variants={animButtonVariants}
+        initial="initial"
+        whileHover={!disabled && !loading ? "hover" : undefined}
+        whileTap={!disabled && !loading ? "tap" : undefined}
+        transition={transitions.fast}
+        {...(props as any)}
+      >
+        {children}
+      </MotionComp>
+    );
+  }
 
   return (
     <MotionComp

@@ -16,22 +16,24 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.ts"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.2",
     "@types/ws": "^8.18.1",
+    "@vznx-challenge/config": "workspace:*",
+    "drizzle-kit": "^0.31.2",
     "tsdown": "catalog:",
-    "@vznx-challenge/config": "workspace:*"
+    "tsx": "^4.20.6"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "drizzle-orm": "^0.44.2",
     "@neondatabase/serverless": "^1.0.1",
-    "ws": "^8.18.3",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.44.2",
+    "ws": "^8.18.3",
     "zod": "catalog:"
   }
 }

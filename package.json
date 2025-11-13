@@ -16,7 +16,8 @@
     "db:push": "turbo -F @vznx-challenge/db db:push",
     "db:studio": "turbo -F @vznx-challenge/db db:studio",
     "db:generate": "turbo -F @vznx-challenge/db db:generate",
-    "db:migrate": "turbo -F @vznx-challenge/db db:migrate"
+    "db:migrate": "turbo -F @vznx-challenge/db db:migrate",
+    "db:seed": "turbo -F @vznx-challenge/db db:seed"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
