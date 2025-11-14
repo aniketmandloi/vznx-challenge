@@ -4,7 +4,7 @@ A modern, full-stack project management application built with Next.js 15, tRPC,
 
 ## 🎯 Live App Testing
 
-**App URL**: [Your deployed app URL here]
+**App URL**: https://vznx-challenge-web.vercel.app/
 
 ### Test Account Credentials
 
