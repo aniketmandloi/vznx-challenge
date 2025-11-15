@@ -22,10 +22,12 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.67",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@vznx-challenge/auth": "workspace:*",
     "@vznx-challenge/db": "workspace:*",
+    "ai": "^5.0.93",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.44.7",
     "next": "catalog:",
