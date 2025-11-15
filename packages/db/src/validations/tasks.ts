@@ -48,6 +48,24 @@ export const reorderTasksSchema = z.object({
   taskIds: z.array(z.number().int().positive()),
 });
 
+// Zod schema for batch creating multiple tasks
+export const createManyTasksSchema = z.object({
+  projectId: z.number().int().positive("Project ID is required"),
+  tasks: z
+    .array(
+      z.object({
+        name: z
+          .string()
+          .min(1, "Task name is required")
+          .max(255, "Task name must be less than 255 characters"),
+        order: z.number().int().default(0),
+        assignedToId: z.string().optional(),
+      })
+    )
+    .min(1, "At least one task is required")
+    .max(50, "Maximum 50 tasks can be created at once"),
+});
+
 // Type exports for use in tRPC
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
@@ -55,3 +73,4 @@ export type ToggleTaskStatusInput = z.infer<typeof toggleTaskStatusSchema>;
 export type DeleteTaskInput = z.infer<typeof deleteTaskSchema>;
 export type GetTasksByProjectInput = z.infer<typeof getTasksByProjectSchema>;
 export type ReorderTasksInput = z.infer<typeof reorderTasksSchema>;
+export type CreateManyTasksInput = z.infer<typeof createManyTasksSchema>;

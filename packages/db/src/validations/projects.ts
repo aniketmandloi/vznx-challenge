@@ -46,8 +46,27 @@ export const getProjectByIdSchema = z.object({
   id: z.number().int().positive(),
 });
 
+// Zod schema for AI task generation
+export const generateTasksSchema = z.object({
+  projectName: z
+    .string()
+    .min(1, "Project name is required")
+    .max(200, "Project name must be less than 200 characters"),
+  projectDescription: z
+    .string()
+    .max(2000, "Project description must be less than 2000 characters")
+    .optional(),
+  taskCount: z
+    .number()
+    .int()
+    .min(3, "Minimum 3 tasks required")
+    .max(20, "Maximum 20 tasks allowed")
+    .default(10),
+});
+
 // Type exports for use in tRPC
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 export type DeleteProjectInput = z.infer<typeof deleteProjectSchema>;
 export type GetProjectByIdInput = z.infer<typeof getProjectByIdSchema>;
+export type GenerateTasksInput = z.infer<typeof generateTasksSchema>;

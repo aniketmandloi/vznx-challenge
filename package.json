@@ -29,5 +29,10 @@
     "tsx": "^4.20.6",
     "turbo": "^2.5.4"
   },
+  "pnpm": {
+    "overrides": {
+      "drizzle-orm": "0.44.7"
+    }
+  },
   "packageManager": "pnpm@10.15.1"
 }

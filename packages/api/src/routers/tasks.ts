@@ -9,6 +9,7 @@ import {
   deleteTaskSchema,
   getTasksByProjectSchema,
   reorderTasksSchema,
+  createManyTasksSchema,
 } from "@vznx-challenge/db";
 import { protectedProcedure, router } from "../index";
 import type { Context } from "../context";
@@ -264,5 +265,93 @@ export const tasksRouter = router({
       );
 
       return { success: true };
+    }),
+
+  /**
+   * Batch create multiple tasks for a project in a single transaction
+   * Optimized for AI-generated task creation and bulk imports
+   *
+   * Benefits:
+   * - Single database round-trip for better performance
+   * - Atomic operation - all tasks created together or none
+   * - Automatically updates project progress after creation
+   *
+   * @returns Array of created tasks with full task data
+   * @throws TRPCError with code NOT_FOUND if project doesn't exist or user doesn't own it
+   * @throws TRPCError with code INTERNAL_SERVER_ERROR if batch creation fails
+   */
+  createMany: protectedProcedure
+    .input(createManyTasksSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        // Verify project ownership
+        const [projectData] = await ctx.db
+          .select()
+          .from(project)
+          .where(
+            and(eq(project.id, input.projectId), eq(project.userId, userId))
+          )
+          .limit(1);
+
+        if (!projectData) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Project not found or you don't have access to it",
+          });
+        }
+
+        // Use transaction for atomic batch insert
+        // This ensures all tasks are created together or none are created if any fail
+        const createdTasks = await ctx.db.transaction(async (tx) => {
+          // Batch insert all tasks with project ID
+          const tasksToInsert = input.tasks.map(
+            (t: { name: string; order: number; assignedToId?: string }) => ({
+              name: t.name,
+              order: t.order,
+              assignedToId: t.assignedToId,
+              projectId: input.projectId,
+              status: "incomplete" as const, // Default status for new tasks
+            })
+          );
+
+          const insertedTasks = await tx
+            .insert(task)
+            .values(tasksToInsert)
+            .returning();
+
+          // Auto-update project progress after batch creation
+          await updateProjectProgress({ db: tx as any }, input.projectId);
+
+          return insertedTasks;
+        });
+
+        return {
+          success: true,
+          tasks: createdTasks,
+          count: createdTasks.length,
+        };
+      } catch (error) {
+        // If it's already a TRPCError, re-throw it
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        // Handle database errors
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to create tasks: ${error.message}`,
+            cause: error,
+          });
+        }
+
+        // Unknown error
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "An unexpected error occurred while creating tasks",
+        });
+      }
     }),
 });
