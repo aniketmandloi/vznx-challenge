@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import z from "zod";
 import {
   Dialog,
@@ -20,6 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { trpc } from "@/utils/trpc";
+import { AILoadingIndicator } from "@/components/AILoadingIndicator";
+import { AITaskPreview, type GeneratedTask } from "@/components/AITaskPreview";
 import type { ProjectStatus } from "@/components/StatusBadge";
 
 interface ProjectFormData {
@@ -31,7 +39,7 @@ interface ProjectFormData {
 interface ProjectFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: ProjectFormData) => Promise<void>;
+  onSubmit: (data: ProjectFormData, aiTasks?: GeneratedTask[]) => Promise<void>;
   initialData?: Partial<ProjectFormData>;
   mode?: "create" | "edit";
 }
@@ -49,6 +57,31 @@ export function ProjectForm({
   initialData,
   mode = "create",
 }: ProjectFormProps) {
+  // AI task generation state
+  const [aiTasks, setAiTasks] = useState<GeneratedTask[]>([]);
+  const [showAiPreview, setShowAiPreview] = useState(false);
+
+  // AI task generation mutation
+  const generateTasks = useMutation({
+    ...trpc.projects.generateTasks.mutationOptions(),
+    onSuccess: (tasks) => {
+      setAiTasks(tasks);
+      setShowAiPreview(true);
+      toast.success(`Generated ${tasks.length} tasks!`);
+    },
+    onError: (error: any) => {
+      // Handle specific error types
+      if (error.message?.includes("rate_limit")) {
+        toast.error("AI service busy. Please wait 30 seconds and try again.");
+      } else if (error.message?.includes("API key")) {
+        toast.error("AI configuration error. Please contact support.");
+      } else {
+        toast.error("Could not generate tasks. Try manually creating them.");
+      }
+    },
+  });
+
+
   const form = useForm({
     defaultValues: {
       name: initialData?.name || "",
@@ -56,18 +89,58 @@ export function ProjectForm({
       status: (initialData?.status || "planning") as ProjectStatus,
     },
     onSubmit: async ({ value }) => {
-      await onSubmit(value as ProjectFormData);
+      // Pass AI tasks to parent if they exist (only in create mode)
+      const tasksToCreate =
+        mode === "create" && aiTasks.length > 0 ? aiTasks : undefined;
+
+      // Create the project (and tasks will be created by parent if provided)
+      await onSubmit(value as ProjectFormData, tasksToCreate);
+
+      // Reset form and AI state
       form.reset();
-      onOpenChange(false);
+      setAiTasks([]);
+      setShowAiPreview(false);
     },
     validators: {
       onSubmit: projectSchema,
     },
   });
 
+  /**
+   * Handle AI task generation
+   */
+  const handleGenerateTasks = async () => {
+    const projectName = form.getFieldValue("name");
+    const projectDescription = form.getFieldValue("description");
+
+    if (!projectName || projectName.trim().length === 0) {
+      toast.error("Please enter a project name first");
+      return;
+    }
+
+    await generateTasks.mutateAsync({
+      projectName: projectName.trim(),
+      projectDescription: projectDescription?.trim() || undefined,
+      taskCount: 10, // Default to 10 tasks
+    });
+  };
+
+  /**
+   * Reset state when dialog closes
+   */
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset AI state when closing dialog
+      setAiTasks([]);
+      setShowAiPreview(false);
+      form.reset();
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Create New Project" : "Edit Project"}
@@ -94,7 +167,7 @@ export function ProjectForm({
                 <Input
                   id={field.name}
                   name={field.name}
-                  placeholder="e.g., Website Redesign"
+                  placeholder="e.g., Modern Villa Design"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -115,7 +188,7 @@ export function ProjectForm({
                 <Textarea
                   id={field.name}
                   name={field.name}
-                  placeholder="Describe your project..."
+                  placeholder="Describe your project... (e.g., 3-bedroom luxury villa with sustainable features)"
                   rows={4}
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -129,6 +202,43 @@ export function ProjectForm({
               </div>
             )}
           </form.Field>
+
+          {/* AI Task Generation Button - Only in Create Mode */}
+          {mode === "create" && (
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateTasks}
+                disabled={
+                  generateTasks.isPending || !form.getFieldValue("name")
+                }
+                className="w-full border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-colors"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {generateTasks.isPending
+                  ? "Generating Tasks..."
+                  : "Generate Tasks with AI"}
+              </Button>
+
+              {/* AI Loading Indicator */}
+              {generateTasks.isPending && <AILoadingIndicator />}
+
+              {/* AI Task Preview */}
+              {showAiPreview && aiTasks.length > 0 && (
+                <div className="pt-2">
+                  <AITaskPreview
+                    tasks={aiTasks}
+                    onTasksChange={setAiTasks}
+                    isLoading={generateTasks.isPending}
+                  />
+                </div>
+              )}
+
+              {/* Separator if AI preview is shown */}
+              {showAiPreview && <Separator className="my-4" />}
+            </div>
+          )}
 
           <form.Field name="status">
             {(field) => (

@@ -243,12 +243,43 @@ export function DashboardContent({ userName }: DashboardContentProps) {
     return sorted;
   }, [projects, searchQuery, filterStatus, sortBy]);
 
-  const handleCreateProject = async (data: {
-    name: string;
-    description: string;
-    status: ProjectStatus;
-  }) => {
-    await createProject.mutateAsync(data);
+  // Batch task creation mutation
+  const createManyTasks = useMutation({
+    ...trpc.tasks.createMany.mutationOptions(),
+    onSuccess: (result) => {
+      toast.success(`Created ${result.count} AI-generated tasks!`);
+    },
+    onError: () => {
+      toast.error("Failed to create tasks. You can add them manually later.");
+    },
+  });
+
+  const handleCreateProject = async (
+    data: {
+      name: string;
+      description: string;
+      status: ProjectStatus;
+    },
+    aiTasks?: Array<{ name: string; order: number; estimatedDuration?: string }>
+  ) => {
+    // Create the project first
+    const newProject = await createProject.mutateAsync(data);
+
+    // If AI tasks were provided, create them in batch
+    if (aiTasks && aiTasks.length > 0 && newProject?.id) {
+      try {
+        await createManyTasks.mutateAsync({
+          projectId: newProject.id,
+          tasks: aiTasks.map((task) => ({
+            name: task.name,
+            order: task.order,
+          })),
+        });
+      } catch (error) {
+        // Task creation failed, but project was created successfully
+        console.error("Failed to create AI tasks:", error);
+      }
+    }
   };
 
   const handleUpdateProject = async (data: {
