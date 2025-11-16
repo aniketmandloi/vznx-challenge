@@ -60,6 +60,14 @@ export const createManyTasksSchema = z.object({
           .max(255, "Task name must be less than 255 characters"),
         order: z.number().int().default(0),
         assignedToId: z.string().optional(),
+        aiGenerated: z.boolean().optional().default(false),
+        metadata: z
+          .object({
+            estimatedDuration: z.string().optional(),
+            generatedAt: z.string().optional(),
+            aiModel: z.string().optional(),
+          })
+          .optional(),
       })
     )
     .min(1, "At least one task is required")

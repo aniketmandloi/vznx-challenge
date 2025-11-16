@@ -242,6 +242,9 @@ export function ProjectForm({
       setAiTasks([]);
       setShowAiPreview(false);
       setAiError(null);
+
+      // Close the dialog after successful submission
+      onOpenChange(false);
     },
     validators: {
       onSubmit: projectSchema,
@@ -252,8 +255,8 @@ export function ProjectForm({
    * Handle AI task generation with retry logic
    */
   const handleGenerateTasks = async () => {
-    const projectName = form.getFieldValue("name");
-    const projectDescription = form.getFieldValue("description");
+    const projectName = form.state.values.name;
+    const projectDescription = form.state.values.description;
 
     if (!projectName || projectName.trim().length === 0) {
       toast.error("Please enter a project name first");
@@ -302,8 +305,8 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {mode === "create" ? "Create New Project" : "Edit Project"}
           </DialogTitle>
@@ -314,204 +317,216 @@ export function ProjectForm({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <form.Field name="name">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Project Name *</Label>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  placeholder="e.g., Modern Villa Design"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-destructive">
-                    {field.state.meta.errors[0]?.toString()}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
+        <div className="flex-1 overflow-y-auto pr-2">
+          {/* Scrollable content wrapper */}
 
-          <form.Field name="description">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Description</Label>
-                <Textarea
-                  id={field.name}
-                  name={field.name}
-                  placeholder="Describe your project... (e.g., 3-bedroom luxury villa with sustainable features)"
-                  rows={4}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-destructive">
-                    {field.state.meta.errors[0]?.toString()}
-                  </p>
-                )}
-              </div>
-            )}
-          </form.Field>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <form.Field name="name">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name}>Project Name *</Label>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    placeholder="e.g., Modern Villa Design"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {field.state.meta.errors.length > 0 && (
+                    <p className="text-sm text-destructive">
+                      {field.state.meta.errors[0]?.toString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
 
-          {/* AI Task Generation Button - Only in Create Mode */}
-          {mode === "create" && (
-            <div className="space-y-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGenerateTasks}
-                disabled={
-                  generateTasks.isPending || !form.getFieldValue("name")
-                }
-                className="w-full border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-colors"
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                {generateTasks.isPending
-                  ? "Generating Tasks..."
-                  : "Generate Tasks with AI"}
-              </Button>
+            <form.Field name="description">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name}>Description</Label>
+                  <Textarea
+                    id={field.name}
+                    name={field.name}
+                    placeholder="Describe your project... (e.g., 3-bedroom luxury villa with sustainable features)"
+                    rows={4}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {field.state.meta.errors.length > 0 && (
+                    <p className="text-sm text-destructive">
+                      {field.state.meta.errors[0]?.toString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
 
-              {/* AI Loading Indicator */}
-              {generateTasks.isPending && <AILoadingIndicator />}
+            {/* AI Task Generation Button - Only in Create Mode */}
+            {mode === "create" && (
+              <div className="space-y-3">
+                <form.Subscribe selector={(state) => state.values.name}>
+                  {(projectName) => (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateTasks}
+                      disabled={
+                        generateTasks.isPending ||
+                        !projectName ||
+                        projectName.trim().length === 0
+                      }
+                      className="w-full border-primary/30 hover:bg-primary/5 hover:border-primary/50 transition-colors"
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      {generateTasks.isPending
+                        ? "Generating Tasks..."
+                        : "Generate Tasks with AI"}
+                    </Button>
+                  )}
+                </form.Subscribe>
 
-              {/* AI Error State with Retry */}
-              {aiError && !generateTasks.isPending && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                    <div className="flex-1 space-y-2">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-destructive">
-                          {aiError.type === "rate_limit" &&
-                            "Rate Limit Reached"}
-                          {aiError.type === "api_key" && "Configuration Error"}
-                          {aiError.type === "timeout" && "Request Timeout"}
-                          {aiError.type === "network" && "Network Error"}
-                          {aiError.type === "invalid_response" &&
-                            "Invalid Response"}
-                          {aiError.type === "unknown" && "Generation Failed"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {aiError.message}
-                        </p>
-                      </div>
+                {/* AI Loading Indicator */}
+                {generateTasks.isPending && <AILoadingIndicator />}
 
-                      {/* Retry button for retryable errors */}
-                      {aiError.retryable && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleRetryGeneration}
-                            disabled={retryCountRef.current >= MAX_RETRIES}
-                            className="h-8 text-xs"
-                          >
-                            <RefreshCw className="mr-1.5 h-3 w-3" />
-                            Retry{" "}
-                            {retryCountRef.current > 0 &&
-                              `(${retryCountRef.current}/${MAX_RETRIES})`}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setAiError(null)}
-                            className="h-8 text-xs"
-                          >
-                            Dismiss
-                          </Button>
+                {/* AI Error State with Retry */}
+                {aiError && !generateTasks.isPending && (
+                  <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-2">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-destructive">
+                            {aiError.type === "rate_limit" &&
+                              "Rate Limit Reached"}
+                            {aiError.type === "api_key" &&
+                              "Configuration Error"}
+                            {aiError.type === "timeout" && "Request Timeout"}
+                            {aiError.type === "network" && "Network Error"}
+                            {aiError.type === "invalid_response" &&
+                              "Invalid Response"}
+                            {aiError.type === "unknown" && "Generation Failed"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {aiError.message}
+                          </p>
                         </div>
-                      )}
+
+                        {/* Retry button for retryable errors */}
+                        {aiError.retryable && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={handleRetryGeneration}
+                              disabled={retryCountRef.current >= MAX_RETRIES}
+                              className="h-8 text-xs"
+                            >
+                              <RefreshCw className="mr-1.5 h-3 w-3" />
+                              Retry{" "}
+                              {retryCountRef.current > 0 &&
+                                `(${retryCountRef.current}/${MAX_RETRIES})`}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setAiError(null)}
+                              className="h-8 text-xs"
+                            >
+                              Dismiss
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* AI Task Preview */}
-              {showAiPreview && aiTasks.length > 0 && (
-                <div className="pt-2">
-                  <AITaskPreview
-                    tasks={aiTasks}
-                    onTasksChange={setAiTasks}
-                    isLoading={generateTasks.isPending}
-                  />
-                </div>
-              )}
-
-              {/* Separator if AI preview is shown */}
-              {showAiPreview && <Separator className="my-4" />}
-            </div>
-          )}
-
-          <form.Field name="status">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Status</Label>
-                <Select
-                  value={field.state.value}
-                  onValueChange={(value) =>
-                    field.handleChange(value as ProjectStatus)
-                  }
-                >
-                  <SelectTrigger id={field.name}>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planning">Planning</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="on-hold">On Hold</SelectItem>
-                  </SelectContent>
-                </Select>
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-destructive">
-                    {field.state.meta.errors[0]?.toString()}
-                  </p>
                 )}
-              </div>
-            )}
-          </form.Field>
 
-          <form.Subscribe>
-            {(state) => (
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    form.reset();
-                    onOpenChange(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={!state.canSubmit || state.isSubmitting}
-                >
-                  {state.isSubmitting
-                    ? "Saving..."
-                    : mode === "create"
-                    ? "Create Project"
-                    : "Update Project"}
-                </Button>
+                {/* AI Task Preview */}
+                {showAiPreview && aiTasks.length > 0 && (
+                  <div className="pt-2">
+                    <AITaskPreview
+                      tasks={aiTasks}
+                      onTasksChange={setAiTasks}
+                      isLoading={generateTasks.isPending}
+                    />
+                  </div>
+                )}
+
+                {/* Separator if AI preview is shown */}
+                {showAiPreview && <Separator className="my-4" />}
               </div>
             )}
-          </form.Subscribe>
-        </form>
+
+            <form.Field name="status">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name}>Status</Label>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(value) =>
+                      field.handleChange(value as ProjectStatus)
+                    }
+                  >
+                    <SelectTrigger id={field.name}>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="on-hold">On Hold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {field.state.meta.errors.length > 0 && (
+                    <p className="text-sm text-destructive">
+                      {field.state.meta.errors[0]?.toString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
+
+            <form.Subscribe>
+              {(state) => (
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      form.reset();
+                      onOpenChange(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={!state.canSubmit || state.isSubmitting}
+                  >
+                    {state.isSubmitting
+                      ? "Saving..."
+                      : mode === "create"
+                      ? "Create Project"
+                      : "Update Project"}
+                  </Button>
+                </div>
+              )}
+            </form.Subscribe>
+          </form>
+        </div>
+        {/* End scrollable content wrapper */}
       </DialogContent>
     </Dialog>
   );

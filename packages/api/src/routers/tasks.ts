@@ -302,30 +302,34 @@ export const tasksRouter = router({
           });
         }
 
-        // Use transaction for atomic batch insert
-        // This ensures all tasks are created together or none are created if any fail
-        const createdTasks = await ctx.db.transaction(async (tx) => {
-          // Batch insert all tasks with project ID
-          const tasksToInsert = input.tasks.map(
-            (t: { name: string; order: number; assignedToId?: string }) => ({
-              name: t.name,
-              order: t.order,
-              assignedToId: t.assignedToId,
-              projectId: input.projectId,
-              status: "incomplete" as const, // Default status for new tasks
-            })
-          );
+        // Batch insert all tasks with project ID
+        // Note: Neon HTTP driver doesn't support transactions, so we do sequential operations
+        // The batch insert itself is atomic
+        const tasksToInsert = input.tasks.map(
+          (t: {
+            name: string;
+            order: number;
+            assignedToId?: string;
+            aiGenerated?: boolean;
+            metadata?: any;
+          }) => ({
+            name: t.name,
+            order: t.order,
+            assignedToId: t.assignedToId,
+            projectId: input.projectId,
+            status: "incomplete" as const, // Default status for new tasks
+            aiGenerated: t.aiGenerated ?? false,
+            metadata: t.metadata ?? null,
+          })
+        );
 
-          const insertedTasks = await tx
-            .insert(task)
-            .values(tasksToInsert)
-            .returning();
+        const createdTasks = await ctx.db
+          .insert(task)
+          .values(tasksToInsert)
+          .returning();
 
-          // Auto-update project progress after batch creation
-          await updateProjectProgress({ db: tx as any }, input.projectId);
-
-          return insertedTasks;
-        });
+        // Auto-update project progress after batch creation
+        await updateProjectProgress({ db: ctx.db }, input.projectId);
 
         return {
           success: true,
