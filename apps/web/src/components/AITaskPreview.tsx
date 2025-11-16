@@ -99,10 +99,28 @@ function SortableTaskItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.2, delay: index * 0.05 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+          type: "spring",
+          stiffness: 500,
+          damping: 30,
+          delay: index * 0.05,
+        },
+      }}
+      exit={{
+        opacity: 0,
+        x: -20,
+        scale: 0.9,
+        transition: { duration: 0.2 },
+      }}
+      whileHover={{
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 400, damping: 25 },
+      }}
       className="group relative flex items-center gap-2 rounded-md border bg-card p-3 shadow-sm hover:shadow-md transition-shadow"
     >
       {/* Drag Handle */}
@@ -291,9 +309,26 @@ export function AITaskPreview({
   // Empty state
   if (tasksWithIds.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center"
+      >
         <div className="flex flex-col items-center gap-3">
-          <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+          </motion.div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">
               No tasks generated yet
@@ -303,16 +338,37 @@ export function AITaskPreview({
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-4"
+    >
       {/* Header with actions */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+        className="flex items-center justify-between"
+      >
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
+          <motion.div
+            animate={{
+              rotate: [0, 10, -10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <Sparkles className="h-4 w-4 text-primary" />
+          </motion.div>
           <h3 className="text-sm font-semibold">
             AI Generated Tasks ({tasksWithIds.length})
           </h3>
@@ -328,7 +384,7 @@ export function AITaskPreview({
           <Trash2 className="mr-1.5 h-3 w-3" />
           Clear All
         </Button>
-      </div>
+      </motion.div>
 
       {/* Instructions */}
       <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
@@ -390,6 +446,6 @@ export function AITaskPreview({
           Add Task
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }
