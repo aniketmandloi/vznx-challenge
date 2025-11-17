@@ -361,6 +361,8 @@ export function ProjectForm({
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    maxLength={500}
+                    showCounter={true}
                   />
                   {field.state.meta.errors.length > 0 && (
                     <p className="text-sm text-destructive">
@@ -514,6 +516,8 @@ export function ProjectForm({
                   <Button
                     type="submit"
                     disabled={!state.canSubmit || state.isSubmitting}
+                    withRipple={true}
+                    loading={state.isSubmitting}
                   >
                     {state.isSubmitting
                       ? "Saving..."
