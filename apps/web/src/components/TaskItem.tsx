@@ -74,7 +74,7 @@ export function TaskItem({
   useEffect(() => {
     if (isChecked && status === "incomplete") {
       setShowCelebration(true);
-      const timer = setTimeout(() => setShowCelebration(false), 1000);
+      const timer = setTimeout(() => setShowCelebration(false), 500);
       return () => clearTimeout(timer);
     }
   }, [isChecked, status]);
@@ -86,7 +86,7 @@ export function TaskItem({
     // Show celebration only when completing a task (not uncompleting)
     if (newChecked) {
       setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 1000);
+      setTimeout(() => setShowCelebration(false), 500);
     }
 
     onToggleStatus?.(id);
@@ -161,7 +161,7 @@ export function TaskItem({
         <button
           {...attributes}
           {...listeners}
-          className="shrink-0 cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          className="shrink-0 cursor-grab active:cursor-grabbing touch-none md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-2 min-h-11 min-w-11 flex items-center justify-center"
           aria-label="Drag to reorder"
         >
           <GripVertical className="h-5 w-5" />
@@ -210,11 +210,11 @@ export function TaskItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+          className="shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
           onClick={() => onDelete(id)}
+          aria-label="Delete task"
         >
           <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Delete task</span>
         </Button>
       )}
     </motion.div>

@@ -1,4 +1,12 @@
-import { pgTable, text, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  timestamp,
+  pgEnum,
+  boolean,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { user } from "./auth";
 import { project } from "./projects";
@@ -32,6 +40,14 @@ export const task = pgTable("task", {
   assignedToId: text("assigned_to_id").references(() => user.id, {
     onDelete: "set null",
   }),
+
+  // AI-related fields
+  aiGenerated: boolean("ai_generated").default(false),
+  metadata: jsonb("metadata").$type<{
+    estimatedDuration?: string;
+    generatedAt?: string;
+    aiModel?: string;
+  }>(),
 });
 
 // Define relations for type-safe queries

@@ -72,44 +72,11 @@ export function DashboardContent({ userName }: DashboardContentProps) {
   );
   const queryClient = useQueryClient();
 
-  // Mutations with optimistic updates
+  // Create project mutation
   const createProject = useMutation({
     ...trpc.projects.create.mutationOptions(),
-    onMutate: async (newProject) => {
-      const queryKey = trpc.projects.getAll.queryOptions().queryKey;
-      await queryClient.cancelQueries({ queryKey });
-      const previousProjects = queryClient.getQueryData(queryKey);
-
-      // Optimistically add the new project
-      queryClient.setQueryData(queryKey, (old: any = []) => [
-        ...old,
-        {
-          id: Date.now(), // Temporary ID
-          name: newProject.name,
-          status: newProject.status,
-          progress: 0,
-          description: newProject.description || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          userId: "",
-          totalTasks: 0,
-          completedTasks: 0,
-        },
-      ]);
-
-      return { previousProjects };
-    },
-    onError: (_err, _newProject, context) => {
-      const queryKey = trpc.projects.getAll.queryOptions().queryKey;
-      queryClient.setQueryData(queryKey, context?.previousProjects);
+    onError: () => {
       toast.error("Failed to create project");
-    },
-    onSuccess: () => {
-      toast.success("Project created successfully");
-    },
-    onSettled: () => {
-      const queryKey = trpc.projects.getAll.queryOptions().queryKey;
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -243,12 +210,51 @@ export function DashboardContent({ userName }: DashboardContentProps) {
     return sorted;
   }, [projects, searchQuery, filterStatus, sortBy]);
 
-  const handleCreateProject = async (data: {
-    name: string;
-    description: string;
-    status: ProjectStatus;
-  }) => {
-    await createProject.mutateAsync(data);
+  // Batch task creation mutation
+  const createManyTasks = useMutation({
+    ...trpc.tasks.createMany.mutationOptions(),
+    onError: () => {
+      toast.error("Failed to create tasks. You can add them manually later.");
+    },
+    // Don't invalidate here - we'll do it manually after all operations complete
+  });
+
+  const handleCreateProject = async (
+    data: {
+      name: string;
+      description: string;
+      status: ProjectStatus;
+    },
+    aiTasks?: Array<{ name: string; order: number; estimatedDuration?: string }>
+  ) => {
+    // Create the project first
+    const newProject = await createProject.mutateAsync(data);
+
+    // If AI tasks were provided, create them in batch
+    if (aiTasks && aiTasks.length > 0 && newProject?.id) {
+      try {
+        await createManyTasks.mutateAsync({
+          projectId: newProject.id,
+          tasks: aiTasks.map((task) => ({
+            name: task.name,
+            order: task.order,
+            aiGenerated: true,
+            metadata: {
+              generatedAt: new Date().toISOString(),
+              aiModel: "gpt-4o-mini",
+              estimatedDuration: task.estimatedDuration,
+            },
+          })),
+        });
+      } catch (error) {
+        // Task creation failed, but project was created successfully
+        console.error("Failed to create AI tasks:", error);
+      }
+    }
+
+    // Force an immediate refetch and wait for it to complete
+    const queryKey = trpc.projects.getAll.queryOptions().queryKey;
+    await queryClient.refetchQueries({ queryKey, type: "active" });
   };
 
   const handleUpdateProject = async (data: {

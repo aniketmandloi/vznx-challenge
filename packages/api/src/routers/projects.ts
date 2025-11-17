@@ -8,8 +8,10 @@ import {
   updateProjectSchema,
   deleteProjectSchema,
   getProjectByIdSchema,
+  generateTasksSchema,
 } from "@vznx-challenge/db";
 import { protectedProcedure, router } from "../index";
+import { generateArchitectureTasks } from "../lib/ai";
 
 export const projectsRouter = router({
   /**
@@ -231,5 +233,84 @@ export const projectsRouter = router({
         totalTasks,
         completedTasks,
       };
+    }),
+
+  /**
+   * Generate AI-powered task suggestions for a project
+   * Uses OpenAI to create architecture-specific tasks based on project details
+   *
+   * @returns Array of generated tasks with names, order, and optional estimated durations
+   * @throws TRPCError with code INTERNAL_SERVER_ERROR if AI generation fails
+   * @throws TRPCError with code BAD_REQUEST if API key is missing or invalid
+   */
+  generateTasks: protectedProcedure
+    .input(generateTasksSchema)
+    .mutation(async ({ input }) => {
+      try {
+        // Call AI utility to generate tasks
+        const generatedTasks = await generateArchitectureTasks(
+          input.projectName,
+          input.projectDescription,
+          input.taskCount
+        );
+
+        // Transform to format expected by client (removing estimatedDuration for now)
+        const tasksForClient = generatedTasks.map((task) => ({
+          name: task.name,
+          order: task.order,
+          estimatedDuration: task.estimatedDuration,
+        }));
+
+        return tasksForClient;
+      } catch (error) {
+        // Handle specific AI-related errors with appropriate tRPC error codes
+        if (error instanceof Error) {
+          // API key missing or invalid
+          if (
+            error.message.includes("API key") ||
+            error.message.includes("invalid_api_key")
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "AI service configuration error. Please contact support.",
+              cause: error,
+            });
+          }
+
+          // Rate limit exceeded
+          if (error.message.includes("rate_limit")) {
+            throw new TRPCError({
+              code: "TOO_MANY_REQUESTS",
+              message:
+                "AI service is currently busy. Please try again in 30 seconds.",
+              cause: error,
+            });
+          }
+
+          // Quota exceeded
+          if (error.message.includes("quota")) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "AI service quota exceeded. Please contact support.",
+              cause: error,
+            });
+          }
+
+          // Generic AI generation error
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Failed to generate tasks. Please try again or create tasks manually.",
+            cause: error,
+          });
+        }
+
+        // Unknown error type
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "An unexpected error occurred while generating tasks.",
+        });
+      }
     }),
 });

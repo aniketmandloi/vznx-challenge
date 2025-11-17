@@ -8,6 +8,12 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ProgressBar } from "@/components/ProgressBar";
 import { StatusBadge, type ProjectStatus } from "@/components/StatusBadge";
 import { Edit2, Trash2, CheckSquare } from "lucide-react";
@@ -41,42 +47,54 @@ export function ProjectCard({
   return (
     <Card
       className={cn(
-        "group transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer",
-        "border-2 hover:border-primary/50",
+        "group cursor-pointer",
+        "border-2 hover:border-primary/50 transition-colors duration-200",
         className
       )}
       onClick={onClick}
+      animated={true}
+      hoverEffect={true}
     >
       <CardHeader>
-        <CardTitle className="line-clamp-1">{name}</CardTitle>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CardTitle className="line-clamp-1 cursor-default">
+                {name}
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <CardAction>
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             {onEdit && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit();
                 }}
+                aria-label="Edit project"
               >
                 <Edit2 className="h-4 w-4" />
-                <span className="sr-only">Edit project</span>
               </Button>
             )}
             {onDelete && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
+                className="text-destructive hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
                 }}
+                aria-label="Delete project"
               >
                 <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete project</span>
               </Button>
             )}
           </div>

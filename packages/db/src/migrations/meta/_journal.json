@@ -8,6 +8,13 @@
       "when": 1762967667094,
       "tag": "0000_pretty_ultron",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1763290000334,
+      "tag": "0001_daily_korg",
+      "breakpoints": true
     }
   ]
 }

@@ -203,6 +203,8 @@ export function TaskForm({
               type="submit"
               disabled={!state.canSubmit || state.isSubmitting}
               className={mode === "inline" ? "w-full" : ""}
+              withRipple={true}
+              loading={state.isSubmitting}
             >
               {state.isSubmitting ? (
                 "Adding..."
